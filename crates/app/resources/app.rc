@@ -1,0 +1,39 @@
+// =====================================================================
+// ScreenTune - Windows 资源定义（图标 + 版本信息）
+// 由 build.rs 通过 embed-resource 编译并嵌入可执行文件
+// =====================================================================
+
+#include <winres.h>
+
+// 应用图标（占位资源，由 scripts/gen_icon.py 生成）
+IDI_ICON1 ICON "../assets/icon.ico"
+
+// 版本信息
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEFLAGSMASK   0x3fL
+FILEFLAGS       0x0L
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName",      "ScreenTune"
+            VALUE "FileDescription",  "ScreenTune - Instant Display Control for Gamers"
+            VALUE "FileVersion",      "1.0.0"
+            VALUE "InternalName",     "screen-tune"
+            VALUE "LegalCopyright",   "MIT License, Copyright (c) 2026 ScreenTune Authors"
+            VALUE "OriginalFilename", "ScreenTune.exe"
+            VALUE "ProductName",      "ScreenTune"
+            VALUE "ProductVersion",   "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0804, 1200
+    END
+END

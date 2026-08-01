@@ -1,0 +1,15 @@
+[package]
+name = "screen-tune-config"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 配置与方案管理（config.json 持久化、Profile 类型、导入导出）"
+
+[dependencies]
+screen-tune-common = { path = "../common" }
+
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+directories.workspace = true
+tracing.workspace = true

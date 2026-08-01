@@ -1,0 +1,90 @@
+# =====================================================================
+# ScreenTune CI
+#
+# Push / PR 触发：
+#   1. cargo fmt --check
+#   2. cargo clippy -D warnings（Windows：覆盖全部 Win32 代码）
+#   3. cargo test（Windows + macOS 双平台）
+#   4. Windows release 构建 → 上传构建产物 Artifact
+# =====================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ---------------------------------------------------------------
+  # 1. 格式检查
+  # ---------------------------------------------------------------
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  # ---------------------------------------------------------------
+  # 2. Clippy（Windows 上运行，可覆盖全部 Win32 代码路径）
+  # ---------------------------------------------------------------
+  clippy:
+    name: clippy
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  # ---------------------------------------------------------------
+  # 3. 单元测试（Windows + macOS）
+  # ---------------------------------------------------------------
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+
+  # ---------------------------------------------------------------
+  # 4. Windows Release 构建 → Artifact
+  # ---------------------------------------------------------------
+  build:
+    name: build (windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release
+
+      # 打包：exe + zip + SHA256
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist
+          Copy-Item target/release/screen-tune.exe dist/ScreenTune.exe
+          Compress-Archive -Path dist/ScreenTune.exe -DestinationPath dist/ScreenTune.zip
+          $hash = (Get-FileHash -Algorithm SHA256 dist/ScreenTune.exe).Hash
+          Set-Content -Path dist/ScreenTune.sha256 -Value $hash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ScreenTune
+          path: dist/

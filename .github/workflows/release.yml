@@ -1,0 +1,67 @@
+# =====================================================================
+# ScreenTune Release
+#
+# 推送 `v*` 标签（如 v1.0.0）时触发：
+#   1. Windows release 构建
+#   2. 打包 ScreenTune.exe + ScreenTune-vX.zip + SHA256
+#   3. 自动创建 GitHub Release 并上传全部产物
+# =====================================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build (release)
+        run: cargo build --release
+
+      # 打包：exe + 带版本号 zip + SHA256（版本取自 tag，如 v1.0.0 → 1.0.0）
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          New-Item -ItemType Directory -Path dist
+          Copy-Item target/release/screen-tune.exe dist/ScreenTune.exe
+          Compress-Archive -Path dist/ScreenTune.exe -DestinationPath dist/ScreenTune-$version.zip
+          $hash = (Get-FileHash -Algorithm SHA256 dist/ScreenTune.exe).Hash
+          Set-Content -Path dist/ScreenTune-$version.sha256 -Value $hash
+          Write-Host "=== 构建产物 ==="
+          Get-ChildItem dist | Select-Object Name, Length
+
+      # 自动创建 Release 并上传产物
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ScreenTune ${{ github.ref_name }}
+          body: |
+            ## ScreenTune ${{ github.ref_name }}
+
+            Instant Display Control for Gamers
+
+            ### 下载
+            - `ScreenTune.exe` — 单文件可执行程序
+            - `ScreenTune-*.zip` — 压缩包
+            - `ScreenTune-*.sha256` — SHA256 校验值
+
+            > 发布产物由 GitHub Actions 在 `windows-latest` 自动构建。
+          files: dist/*
+          generate_release_notes: true

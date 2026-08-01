@@ -1,0 +1,26 @@
+[package]
+name = "screen-tune-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 主程序（入口与全服务组装）"
+
+[[bin]]
+name = "screen-tune"
+path = "src/main.rs"
+
+[dependencies]
+screen-tune-common = { path = "../common" }
+screen-tune-config = { path = "../config" }
+screen-tune-display = { path = "../display" }
+screen-tune-ui = { path = "../ui" }
+
+anyhow.workspace = true
+eframe.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+
+[build-dependencies]
+embed-resource.workspace = true

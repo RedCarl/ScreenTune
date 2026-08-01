@@ -1,0 +1,13 @@
+[package]
+name = "screen-tune-startup"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 开机自启（HKCU\\...\\Run 注册表；非 Windows 平台为 mock）"
+
+[dependencies]
+anyhow.workspace = true
+tracing.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true

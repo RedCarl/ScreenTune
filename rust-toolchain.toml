@@ -1,0 +1,11 @@
+# =====================================================================
+# ScreenTune - Rust 工具链固定
+#
+# 固定使用最新稳定版工具链，保证本地（macOS）与 CI（Windows）
+# 的 rustfmt / clippy 行为一致。
+# =====================================================================
+
+[toolchain]
+channel = "stable"
+profile = "minimal"
+components = ["rustfmt", "clippy"]

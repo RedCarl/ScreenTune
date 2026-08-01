@@ -1,0 +1,67 @@
+# =====================================================================
+# ScreenTune - 根 Workspace 清单
+#
+# 本文件定义整个 Rust Workspace 的结构、共享元数据与统一依赖版本。
+# 所有子 crate 通过 `workspace = true` 复用这里声明的依赖，
+# 保证全仓库依赖版本一致、便于维护。
+# =====================================================================
+
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/ScreenTuneApp/ScreenTune"
+homepage = "https://github.com/ScreenTuneApp/ScreenTune"
+description = "Instant Display Control for Gamers - 面向 Windows 的专业显示增强工具（Gamma / 亮度 / 对比度 / 饱和度 / 色温）"
+keywords = ["display", "gamma", "ddc-ci", "windows", "gamers"]
+categories = ["command-line-utilities", "gui"]
+
+# ---------------------------------------------------------------------
+# 统一依赖版本（所有子 crate 必须从这里引用，禁止各自手写版本号）
+# ---------------------------------------------------------------------
+[workspace.dependencies]
+
+# 错误处理：统一使用 anyhow
+anyhow = "1.0.104"
+
+# 序列化：serde + serde_json
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0"
+
+# 日志：tracing 生态
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+tracing-appender = "0.2.5"
+
+# 异步运行时：仅游戏检测轮询等轻量任务使用
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+
+# 标准目录定位（config / data 目录）
+directories = "6.0.0"
+
+# GUI：egui + eframe（Fluent 风格深色主题自行实现于 ui crate）
+eframe = "0.35.0"
+egui = "0.35.0"
+
+# 全局快捷键（tauri 生态，活跃维护）
+global-hotkey = "0.8.0"
+
+# 系统托盘（tauri 生态，活跃维护）
+tray-icon = "0.24.2"
+
+# Windows 官方 API 绑定（仅 Windows 目标编译）
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",                 # 显示器枚举 / GetMonitorInfoW / CreateDCW
+    "Win32_UI_ColorSystem",               # SetDeviceGammaRamp / GetDeviceGammaRamp
+    "Win32_Devices_Display",              # DDC/CI：SetVCPFeature / GetPhysicalMonitorsFromHMONITOR
+    "Win32_System_Diagnostics_ToolHelp",  # 进程枚举：CreateToolhelp32Snapshot
+    "Win32_System_Registry",              # 开机自启：HKCU\...\Run
+] }
+
+# Windows 资源嵌入（图标 / 版本信息），仅 Windows 目标使用
+embed-resource = "3.0.11"

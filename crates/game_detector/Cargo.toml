@@ -1,0 +1,15 @@
+[package]
+name = "screen-tune-game-detector"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 游戏进程检测（Toolhelp 进程枚举、规则匹配、自动切换状态机）"
+
+[dependencies]
+screen-tune-config = { path = "../config" }
+
+anyhow.workspace = true
+tracing.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true

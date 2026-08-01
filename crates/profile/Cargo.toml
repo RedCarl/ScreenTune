@@ -1,0 +1,14 @@
+[package]
+name = "screen-tune-profile"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 配置方案管理（内置示例方案、CRUD、导入导出）"
+
+[dependencies]
+screen-tune-common = { path = "../common" }
+screen-tune-config = { path = "../config" }
+
+anyhow.workspace = true
+serde.workspace = true
+tracing.workspace = true

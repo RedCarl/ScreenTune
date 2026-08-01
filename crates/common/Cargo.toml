@@ -1,0 +1,12 @@
+[package]
+name = "screen-tune-common"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 公共类型与常量（显示参数、监控器信息、应用常量）"
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

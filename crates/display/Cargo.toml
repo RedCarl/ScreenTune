@@ -1,0 +1,16 @@
+[package]
+name = "screen-tune-display"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 显示引擎（LUT 生成、DDC/CI、多显示器管理、原始 LUT 保存与恢复）"
+
+[dependencies]
+screen-tune-common = { path = "../common" }
+
+anyhow.workspace = true
+serde.workspace = true
+tracing.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true

@@ -1,0 +1,13 @@
+[package]
+name = "screen-tune-hotkey"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 全局快捷键（global-hotkey 封装、快捷键解析、冲突检测）"
+
+[dependencies]
+screen-tune-config = { path = "../config" }
+
+anyhow.workspace = true
+global-hotkey.workspace = true
+tracing.workspace = true

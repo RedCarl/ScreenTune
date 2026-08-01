@@ -1,0 +1,15 @@
+[package]
+name = "screen-tune-tray"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 系统托盘（菜单、事件轮询；非 Windows 平台为 no-op）"
+
+[dependencies]
+screen-tune-config = { path = "../config" }
+
+anyhow.workspace = true
+tracing.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+tray-icon.workspace = true

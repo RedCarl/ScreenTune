@@ -1,0 +1,22 @@
+[package]
+name = "screen-tune-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ScreenTune 界面（egui/eframe，Fluent 风格深色主题，中英双语）"
+
+[dependencies]
+screen-tune-common = { path = "../common" }
+screen-tune-config = { path = "../config" }
+screen-tune-display = { path = "../display" }
+screen-tune-profile = { path = "../profile" }
+screen-tune-hotkey = { path = "../hotkey" }
+screen-tune-tray = { path = "../tray" }
+screen-tune-startup = { path = "../startup" }
+screen-tune-game-detector = { path = "../game_detector" }
+
+eframe.workspace = true
+egui.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tokio.workspace = true
