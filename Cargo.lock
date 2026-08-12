@@ -3292,7 +3292,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "screen-tune-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "eframe",
@@ -3305,11 +3305,12 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "windows",
 ]
 
 [[package]]
 name = "screen-tune-common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -3317,7 +3318,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-config"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "directories",
@@ -3329,7 +3330,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-display"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "screen-tune-common",
@@ -3340,7 +3341,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-game-detector"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "screen-tune-config",
@@ -3350,7 +3351,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-hotkey"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "global-hotkey",
@@ -3360,7 +3361,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-profile"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "screen-tune-common",
@@ -3371,7 +3372,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-startup"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "tracing",
@@ -3380,7 +3381,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-tray"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "screen-tune-config",
@@ -3390,7 +3391,7 @@ dependencies = [
 
 [[package]]
 name = "screen-tune-ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "eframe",

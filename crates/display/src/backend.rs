@@ -55,12 +55,50 @@ impl Clone for MonitorHandle {
 }
 
 impl MonitorHandle {
-    /// 由后端构造句柄
+    /// 由后端构造句柄。
+    ///
+    /// **注意**：内部会对 `data` 再 `Box` 一次，调用方必须直接传入具体类型
+    ///（如 `Win32Data`），不要再 `Box::new(...)`，否则 `downcast_ref` 会失败。
     pub fn new<T: std::any::Any + Send + Sync + Clone>(id: String, data: T) -> Self {
         Self {
             id,
             data: Box::new(data),
         }
+    }
+
+    /// 取回构造时放入的平台私有数据（供后端实现使用）
+    #[cfg_attr(not(windows), allow(dead_code))]
+    pub(crate) fn data_as<T: std::any::Any>(&self) -> Option<&T> {
+        self.data.as_any().downcast_ref::<T>()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[derive(Clone)]
+    struct TestData {
+        value: u32,
+    }
+
+    /// 直接传入具体类型时 downcast 必须成功（防双重 Box 回归）
+    #[test]
+    fn monitor_handle_downcast_plain_data() {
+        let h = MonitorHandle::new("id".into(), TestData { value: 42 });
+        let data = h.data_as::<TestData>().expect("应能 downcast 到 TestData");
+        assert_eq!(data.value, 42);
+    }
+
+    /// 误传 Box 时 downcast 到内层类型会失败（说明双重 Box 的危害）
+    #[test]
+    fn monitor_handle_double_box_breaks_downcast() {
+        let h = MonitorHandle::new("id".into(), Box::new(TestData { value: 1 }));
+        assert!(
+            h.data_as::<TestData>().is_none(),
+            "双重 Box 后 downcast::<TestData> 应失败"
+        );
+        assert!(h.data_as::<Box<TestData>>().is_some());
     }
 }
 

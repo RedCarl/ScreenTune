@@ -7,16 +7,29 @@
 //! 4. 启动 tokio 运行时（游戏检测任务）与 eframe 事件循环；
 //! 5. 退出时恢复全部显示器的原始 LUT 并保存配置。
 
+// Release 构建使用 Windows GUI 子系统，双击启动时不弹出黑色控制台窗口。
+// Debug 构建保留 console，方便 `cargo run` 查看日志。
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use screen_tune_config::ConfigStore;
 use screen_tune_ui::AppCore;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::EnvFilter;
 
-fn main() -> Result<()> {
+fn main() {
+    if let Err(e) = run() {
+        // tracing 可能尚未初始化，仍尽量记日志
+        error!("ScreenTune 启动/运行失败: {e:#}");
+        show_fatal_error(&e);
+        std::process::exit(1);
+    }
+}
+
+fn run() -> Result<()> {
     // -----------------------------------------------------------
     // 1. 配置存储与加载
     // -----------------------------------------------------------
@@ -58,6 +71,8 @@ fn main() -> Result<()> {
 
     if let Err(e) = result {
         warn!("GUI 运行结束（可能为异常）: {e:#}");
+        // eframe 失败也应提示用户
+        return Err(anyhow::anyhow!("GUI 运行失败: {e}"));
     }
 
     // -----------------------------------------------------------
@@ -77,7 +92,8 @@ fn init_tracing(
 ) -> tracing_appender::non_blocking::WorkerGuard {
     let log_dir = store.logs_dir();
     if let Err(e) = std::fs::create_dir_all(&log_dir) {
-        warn!("创建日志目录失败（{}）: {}", e, log_dir.display());
+        // tracing 尚未就绪，只能先忽略
+        let _ = e;
     }
     let file_appender = tracing_appender::rolling::daily(&log_dir, "screen-tune.log");
     let (file_writer, guard) = tracing_appender::non_blocking(file_appender);
@@ -100,4 +116,31 @@ fn init_tracing(
         .with(filter)
         .init();
     guard
+}
+
+/// 向用户展示致命错误（Windows 弹 MessageBox；其他平台 stderr）
+fn show_fatal_error(err: &anyhow::Error) {
+    let body =
+        format!("ScreenTune 启动失败\n\n{err:#}\n\n详细日志见：%APPDATA%\\ScreenTune\\logs\\");
+    eprintln!("{body}");
+
+    #[cfg(windows)]
+    {
+        use windows::core::PCWSTR;
+        use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
+
+        let text: Vec<u16> = body.encode_utf16().chain(std::iter::once(0)).collect();
+        let caption: Vec<u16> = "ScreenTune"
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect();
+        unsafe {
+            let _ = MessageBoxW(
+                None,
+                PCWSTR::from_raw(text.as_ptr()),
+                PCWSTR::from_raw(caption.as_ptr()),
+                MB_OK | MB_ICONERROR,
+            );
+        }
+    }
 }

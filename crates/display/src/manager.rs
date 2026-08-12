@@ -71,6 +71,7 @@ impl DisplayManager {
         let mut monitors = self.monitors.write().unwrap();
         let mut alive: Vec<String> = Vec::new();
 
+        let enumerated_count = enumerated.len();
         for (handle, info) in enumerated {
             alive.push(info.id.clone());
             if monitors.contains_key(&info.id) {
@@ -85,11 +86,18 @@ impl DisplayManager {
                 persist::remove_baseline(&self.backup_dir, &info.id);
             }
 
-            // 读取当前 LUT 作为基线，并持久化
-            let baseline = self
-                .backend
-                .get_gamma_ramp(&handle)
-                .with_context(|| format!("读取显示器 {} 的 Gamma Ramp 失败", info.id))?;
+            // 读取当前 LUT 作为基线，并持久化。
+            // 虚拟/镜像显示器可能不支持 Gamma Ramp：跳过该屏，不全盘失败。
+            let baseline = match self.backend.get_gamma_ramp(&handle) {
+                Ok(ramp) => ramp,
+                Err(e) => {
+                    warn!(
+                        "跳过显示器 {}（{}）：无法读取 Gamma Ramp: {e:#}",
+                        info.name, info.id
+                    );
+                    continue;
+                }
+            };
             if let Err(e) = persist::save_baseline(&self.backup_dir, &info.id, &baseline) {
                 warn!("保存 LUT 备份失败: {e:#}");
             }
@@ -115,6 +123,12 @@ impl DisplayManager {
                     baseline,
                     ddc_baseline_brightness,
                 },
+            );
+        }
+
+        if monitors.is_empty() && enumerated_count > 0 {
+            anyhow::bail!(
+                "已枚举到 {enumerated_count} 台显示器，但均无法读取 Gamma Ramp（可能均为虚拟显示器）"
             );
         }
 

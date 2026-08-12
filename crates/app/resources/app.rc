@@ -11,8 +11,8 @@ IDI_ICON1 ICON "../../../assets/icon.ico"
 
 // 版本信息
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     1,0,0,0
-PRODUCTVERSION  1,0,0,0
+FILEVERSION     0,1,1,0
+PRODUCTVERSION  0,1,1,0
 FILEFLAGSMASK   0x3fL
 FILEFLAGS       0x0L
 FILEOS          VOS_NT_WINDOWS32
@@ -25,12 +25,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",      "ScreenTune"
             VALUE "FileDescription",  "ScreenTune - Instant Display Control for Gamers"
-            VALUE "FileVersion",      "1.0.0"
+            VALUE "FileVersion",      "0.1.1"
             VALUE "InternalName",     "screen-tune"
             VALUE "LegalCopyright",   "MIT License, Copyright (c) 2026 ScreenTune Authors"
             VALUE "OriginalFilename", "ScreenTune.exe"
             VALUE "ProductName",      "ScreenTune"
-            VALUE "ProductVersion",   "1.0.0"
+            VALUE "ProductVersion",   "0.1.1"
         END
     END
     BLOCK "VarFileInfo"

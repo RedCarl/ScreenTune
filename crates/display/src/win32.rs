@@ -145,12 +145,13 @@ impl DisplayBackend for Win32Backend {
 
             let info =
                 MonitorInfo::new(&device_name, name, is_primary, supports_ddc, width, height);
+            // MonitorHandle::new 内部会 Box，这里直接传 Win32Data，切勿再 Box::new
             let handle = MonitorHandle::new(
                 device_name.clone(),
-                Box::new(Win32Data {
+                Win32Data {
                     hmonitor_raw: hmonitor.0 as usize,
                     device_name,
-                }),
+                },
             );
             out.push((handle, info));
         }
@@ -158,11 +159,7 @@ impl DisplayBackend for Win32Backend {
     }
 
     fn get_gamma_ramp(&self, handle: &MonitorHandle) -> Result<[u16; GAMMA_RAMP_LEN]> {
-        let data = handle
-            .data
-            .as_any()
-            .downcast_ref::<Win32Data>()
-            .context("句柄类型不匹配")?;
+        let data = handle.data_as::<Win32Data>().context("句柄类型不匹配")?;
         let mut ramp = [0u16; GAMMA_RAMP_LEN];
         with_device_dc(&data.device_name, |hdc| {
             let ok = unsafe { GetDeviceGammaRamp(hdc, ramp.as_mut_ptr() as *mut c_void) };
@@ -175,11 +172,7 @@ impl DisplayBackend for Win32Backend {
     }
 
     fn set_gamma_ramp(&self, handle: &MonitorHandle, ramp: &[u16; GAMMA_RAMP_LEN]) -> Result<()> {
-        let data = handle
-            .data
-            .as_any()
-            .downcast_ref::<Win32Data>()
-            .context("句柄类型不匹配")?;
+        let data = handle.data_as::<Win32Data>().context("句柄类型不匹配")?;
         with_device_dc(&data.device_name, |hdc| {
             let ok = unsafe { SetDeviceGammaRamp(hdc, ramp.as_ptr() as *const c_void) };
             if !ok.as_bool() {
@@ -190,11 +183,7 @@ impl DisplayBackend for Win32Backend {
     }
 
     fn set_ddc_brightness(&self, handle: &MonitorHandle, value: u32) -> Result<Option<()>> {
-        let data = handle
-            .data
-            .as_any()
-            .downcast_ref::<Win32Data>()
-            .context("句柄类型不匹配")?;
+        let data = handle.data_as::<Win32Data>().context("句柄类型不匹配")?;
         with_first_physical(data.hmonitor(), |pm| {
             let ok = unsafe { SetVCPFeature(pm.hPhysicalMonitor, MC_BRIGHTNESS, value) };
             if ok != 0 {
@@ -206,11 +195,7 @@ impl DisplayBackend for Win32Backend {
     }
 
     fn set_ddc_contrast(&self, handle: &MonitorHandle, value: u32) -> Result<Option<()>> {
-        let data = handle
-            .data
-            .as_any()
-            .downcast_ref::<Win32Data>()
-            .context("句柄类型不匹配")?;
+        let data = handle.data_as::<Win32Data>().context("句柄类型不匹配")?;
         with_first_physical(data.hmonitor(), |pm| {
             let ok = unsafe { SetVCPFeature(pm.hPhysicalMonitor, MC_CONTRAST, value) };
             if ok != 0 {
@@ -222,11 +207,7 @@ impl DisplayBackend for Win32Backend {
     }
 
     fn get_ddc_brightness(&self, handle: &MonitorHandle) -> Result<Option<(u32, u32)>> {
-        let data = handle
-            .data
-            .as_any()
-            .downcast_ref::<Win32Data>()
-            .context("句柄类型不匹配")?;
+        let data = handle.data_as::<Win32Data>().context("句柄类型不匹配")?;
         with_first_physical(data.hmonitor(), |pm| {
             let mut current = 0u32;
             let mut max = 0u32;
@@ -248,11 +229,7 @@ impl DisplayBackend for Win32Backend {
     }
 
     fn get_ddc_contrast(&self, handle: &MonitorHandle) -> Result<Option<(u32, u32)>> {
-        let data = handle
-            .data
-            .as_any()
-            .downcast_ref::<Win32Data>()
-            .context("句柄类型不匹配")?;
+        let data = handle.data_as::<Win32Data>().context("句柄类型不匹配")?;
         with_first_physical(data.hmonitor(), |pm| {
             let mut current = 0u32;
             let mut max = 0u32;
