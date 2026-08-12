@@ -343,7 +343,7 @@ fn with_device_dc<T>(device_name: &str, f: impl FnOnce(HDC) -> Result<T>) -> Res
     }
     let result = f(hdc);
     unsafe {
-        DeleteDC(hdc);
+        let _ = DeleteDC(hdc);
     }
     result
 }

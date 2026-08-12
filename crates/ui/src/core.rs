@@ -5,7 +5,7 @@
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex, RwLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
 use screen_tune_config::{AppConfig, ConfigStore, GameRule, HotkeyAction};
@@ -15,7 +15,6 @@ use screen_tune_hotkey::HotkeyManager;
 use screen_tune_profile::ProfileManager;
 use screen_tune_startup::StartupBackend;
 use screen_tune_tray::{TrayCommand, TrayManager};
-use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
 
 /// UI 消费的应用事件
@@ -55,13 +54,13 @@ pub struct AppCore {
     startup: Box<dyn StartupBackend>,
     /// 游戏检测状态机
     detector: Mutex<GameDetector>,
-    /// 游戏检测后台任务
-    _game_task: Mutex<Option<JoinHandle<()>>>,
+    /// 上次游戏检测 tick 时间（在 UI 线程节流轮询，避免 TrayIcon/Hotkey 非 Send）
+    last_game_tick: Mutex<Option<Instant>>,
     /// 最近一次热键注册的冲突列表
     pub hotkey_conflicts: RwLock<Vec<(String, String)>>,
     /// 当前生效方案（None = 手动自定义）
     current_profile: RwLock<Option<String>>,
-    /// 事件发送端（游戏检测任务等后台 → UI）
+    /// 事件发送端（后台 → UI）
     event_tx: Sender<AppEvent>,
     /// 事件接收端（UI 轮询；Receiver 非 Sync，用 Mutex 包裹以共享 AppCore）
     event_rx: Mutex<Receiver<AppEvent>>,
@@ -86,7 +85,7 @@ impl AppCore {
             tray: Mutex::new(TrayManager::new()),
             startup: screen_tune_startup::default_startup_backend(),
             detector: Mutex::new(detector),
-            _game_task: Mutex::new(None),
+            last_game_tick: Mutex::new(None),
             hotkey_conflicts: RwLock::new(Vec::new()),
             current_profile: RwLock::new(None),
             event_tx,
@@ -112,13 +111,18 @@ impl AppCore {
         Ok(core)
     }
 
-    /// 平台绑定初始化：注册热键、构建托盘、启动游戏检测任务。
+    /// 平台绑定初始化：注册热键、构建托盘。
+    /// 游戏检测在 `poll_external` 中节流执行（UI 线程），
+    /// 因为 tray-icon / global-hotkey 在 Windows 上非 Send。
     /// 必须在 eframe 事件循环运行后（App::new 内）调用。
-    pub fn init_platform_bindings(self: &Arc<Self>, rt: &tokio::runtime::Handle) {
+    pub fn init_platform_bindings(self: &Arc<Self>, _rt: &tokio::runtime::Handle) {
         self.ensure_hotkey_manager();
         self.rebuild_hotkeys();
         self.rebuild_tray();
-        self.spawn_game_detector(rt);
+        info!(
+            "游戏自动切换检测将在 UI 线程轮询（间隔 {}s）",
+            self.config.read().unwrap().game_poll_interval_secs.max(1)
+        );
     }
 
     /// 把当前选中（第一台）显示器的参数同步到全部显示器，并脱离方案状态
@@ -168,11 +172,48 @@ impl AppCore {
             events.extend(self.dispatch_tray(cmd));
         }
 
-        // 后台事件（游戏检测等）
+        // 后台事件通道
         while let Ok(event) = self.event_rx.lock().unwrap().try_recv() {
             events.push(event);
         }
+
+        // 游戏检测：UI 线程节流 tick（避免非 Send 类型进入 tokio spawn）
+        events.extend(self.poll_game_detector());
+
         events
+    }
+
+    /// 按配置间隔执行一次游戏进程检测，并应用 / 恢复方案
+    fn poll_game_detector(&self) -> Vec<AppEvent> {
+        let interval_secs = self.config.read().unwrap().game_poll_interval_secs.max(1);
+        let interval = Duration::from_secs(interval_secs);
+        let mut last = self.last_game_tick.lock().unwrap();
+        let due = match *last {
+            None => true,
+            Some(t) => t.elapsed() >= interval,
+        };
+        if !due {
+            return Vec::new();
+        }
+        *last = Some(Instant::now());
+        drop(last);
+
+        let event = self.detector.lock().unwrap().tick();
+        match event {
+            Some(DetectorEvent::Entered { profile_id, .. }) => {
+                if let Err(e) = self.apply_profile(&profile_id, false) {
+                    warn!("游戏自动应用方案失败: {e:#}");
+                }
+                vec![AppEvent::GameProfileApplied(profile_id)]
+            }
+            Some(DetectorEvent::Exited { .. }) => {
+                if let Err(e) = self.restore_default() {
+                    warn!("游戏退出恢复默认失败: {e:#}");
+                }
+                vec![AppEvent::GameProfileExited]
+            }
+            None => Vec::new(),
+        }
     }
 
     /// 热键动作 → 事件
@@ -435,37 +476,5 @@ impl AppCore {
     pub fn sync_detector_rules(&self) {
         let rules: Vec<GameRule> = self.config.read().unwrap().game_rules.clone();
         self.detector.lock().unwrap().set_rules(rules);
-    }
-
-    /// 启动游戏检测后台任务
-    fn spawn_game_detector(self: &Arc<Self>, rt: &tokio::runtime::Handle) {
-        let interval_secs = self.config.read().unwrap().game_poll_interval_secs.max(1);
-        let core = Arc::clone(self);
-        let handle = rt.spawn(async move {
-            let mut ticker = tokio::time::interval(Duration::from_secs(interval_secs));
-            // 首 tick 立即执行
-            ticker.tick().await;
-            loop {
-                ticker.tick().await;
-                let event = core.detector.lock().unwrap().tick();
-                match event {
-                    Some(DetectorEvent::Entered { profile_id, .. }) => {
-                        if let Err(e) = core.apply_profile(&profile_id, false) {
-                            warn!("游戏自动应用方案失败: {e:#}");
-                        }
-                        let _ = core.send(AppEvent::GameProfileApplied(profile_id));
-                    }
-                    Some(DetectorEvent::Exited { .. }) => {
-                        if let Err(e) = core.restore_default() {
-                            warn!("游戏退出恢复默认失败: {e:#}");
-                        }
-                        let _ = core.send(AppEvent::GameProfileExited);
-                    }
-                    None => {}
-                }
-            }
-        });
-        *self._game_task.lock().unwrap() = Some(handle);
-        info!("游戏自动切换检测已启动（间隔 {interval_secs}s）");
     }
 }
