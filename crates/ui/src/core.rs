@@ -76,6 +76,9 @@ impl AppCore {
         let detector = GameDetector::new(default_lister(), config.game_rules.clone());
 
         let (event_tx, event_rx) = channel();
+        // tray-icon / global-hotkey 在 Windows 上含非 Send 句柄；AppCore 仅在 UI 线程使用，
+        // 用 Arc 便于 eframe 闭包共享，不跨线程传递（游戏检测也在 UI 线程节流）。
+        #[allow(clippy::arc_with_non_send_sync)]
         let core = Arc::new(Self {
             store,
             config: RwLock::new(config),
