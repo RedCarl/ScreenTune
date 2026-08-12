@@ -31,6 +31,13 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Ensure icon assets
+        shell: pwsh
+        run: |
+          if (-not (Test-Path assets/icon.ico)) {
+            python scripts/gen_icon.py
+          }
+
       - name: Build (release)
         run: cargo build --release
 
@@ -39,11 +46,11 @@ jobs:
         shell: pwsh
         run: |
           $version = $env:GITHUB_REF_NAME.TrimStart('v')
-          New-Item -ItemType Directory -Path dist
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
           Copy-Item target/release/screen-tune.exe dist/ScreenTune.exe
-          Compress-Archive -Path dist/ScreenTune.exe -DestinationPath dist/ScreenTune-$version.zip
-          $hash = (Get-FileHash -Algorithm SHA256 dist/ScreenTune.exe).Hash
-          Set-Content -Path dist/ScreenTune-$version.sha256 -Value $hash
+          Compress-Archive -Path dist/ScreenTune.exe -DestinationPath "dist/ScreenTune-$version.zip" -Force
+          $hash = (Get-FileHash -Algorithm SHA256 dist/ScreenTune.exe).Hash.ToLower()
+          Set-Content -Path "dist/ScreenTune-$version.sha256" -Value "ScreenTune.exe  $hash"
           Write-Host "=== 构建产物 ==="
           Get-ChildItem dist | Select-Object Name, Length
 
@@ -52,16 +59,25 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ScreenTune ${{ github.ref_name }}
+          draft: false
+          prerelease: false
           body: |
             ## ScreenTune ${{ github.ref_name }}
 
-            Instant Display Control for Gamers
+            Instant Display Control for Gamers — 面向 Windows 的专业显示增强工具。
 
             ### 下载
-            - `ScreenTune.exe` — 单文件可执行程序
+            - `ScreenTune.exe` — 单文件可执行程序，双击即用
             - `ScreenTune-*.zip` — 压缩包
             - `ScreenTune-*.sha256` — SHA256 校验值
 
+            ### 系统要求
+            Windows 10 / 11（64 位）
+
             > 发布产物由 GitHub Actions 在 `windows-latest` 自动构建。
-          files: dist/*
+          files: |
+            dist/ScreenTune.exe
+            dist/ScreenTune-*.zip
+            dist/ScreenTune-*.sha256
           generate_release_notes: true
+          fail_on_unmatched_files: true

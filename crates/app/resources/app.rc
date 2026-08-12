@@ -5,8 +5,9 @@
 
 #include <winres.h>
 
-// 应用图标（占位资源，由 scripts/gen_icon.py 生成）
-IDI_ICON1 ICON "../assets/icon.ico"
+// 应用图标（仓库根 assets/icon.ico；由 scripts/gen_icon.py 生成）
+// 相对路径以本 .rc 文件所在目录为准：crates/app/resources/ → ../../../assets/
+IDI_ICON1 ICON "../../../assets/icon.ico"
 
 // 版本信息
 VS_VERSION_INFO VERSIONINFO

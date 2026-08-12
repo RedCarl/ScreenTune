@@ -9,9 +9,8 @@
 # 运行时数据（日志、配置备份等，均位于系统目录，不应入库）
 logs/
 
-# 本地运行生成的图标等生成物（由 scripts/gen_icon.py 重新生成）
-assets/*.png
-assets/*.ico
+# 图标由 scripts/gen_icon.py 生成；正式资源入库以便 Windows CI 直接构建
+# 若仅本地试验，可用 git update-index --skip-worktree assets/icon.*
 
 # 编辑器 / 系统文件
 .DS_Store

@@ -1,5 +1,10 @@
 # ScreenTune
 
+[![CI](https://github.com/RedCarl/ScreenTune/actions/workflows/ci.yml/badge.svg)](https://github.com/RedCarl/ScreenTune/actions/workflows/ci.yml)
+[![Release](https://github.com/RedCarl/ScreenTune/actions/workflows/release.yml/badge.svg)](https://github.com/RedCarl/ScreenTune/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/RedCarl/ScreenTune)](https://github.com/RedCarl/ScreenTune/releases/latest)
+
 > **Instant Display Control for Gamers**
 
 一款专注于 Windows 平台的专业显示增强工具：通过快捷键一键调整屏幕 **Gamma（灰度）、亮度、对比度、颜色饱和度、色温**，适用于 FPS 游戏玩家、设计师与日常办公用户。
@@ -37,7 +42,7 @@
 
 ### 方式一：GitHub Release（推荐）
 
-前往 [Releases](https://github.com/ScreenTuneApp/ScreenTune/releases) 下载最新版：
+前往 [Releases](https://github.com/RedCarl/ScreenTune/releases) 下载最新版：
 
 - `ScreenTune.exe` — 单文件可执行程序，双击即用，无需安装
 - `ScreenTune-<版本>.zip` — 压缩包
@@ -212,7 +217,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-即自动构建并在 [Releases](https://github.com/ScreenTuneApp/ScreenTune/releases) 发布。
+即自动构建并在 [Releases](https://github.com/RedCarl/ScreenTune/releases) 发布。
 
 ## 贡献指南
 
