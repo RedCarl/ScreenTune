@@ -196,13 +196,12 @@ pub mod win32 {
                 ..Default::default()
             };
 
-            // 首进程
+            // 首进程（windows 0.62：Process32* 返回 Result<()>）
             if unsafe { Process32FirstW(snapshot, &mut entry) }.is_ok() {
                 collect(&mut out, &entry);
                 // 后续进程
                 loop {
-                    let next = unsafe { Process32NextW(snapshot, &mut entry) };
-                    if !next.as_bool() {
+                    if unsafe { Process32NextW(snapshot, &mut entry) }.is_err() {
                         break;
                     }
                     collect(&mut out, &entry);

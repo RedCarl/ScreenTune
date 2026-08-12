@@ -17,18 +17,18 @@ use anyhow::{Context, Result};
 use screen_tune_common::MonitorInfo;
 use tracing::{debug, trace, warn};
 
-use windows::core::PCWSTR;
+use windows::core::{BOOL, PCWSTR};
 use windows::Win32::Devices::Display::{
     DestroyPhysicalMonitor, GetNumberOfPhysicalMonitorsFromHMONITOR,
     GetPhysicalMonitorsFromHMONITOR, GetVCPFeatureAndVCPFeatureReply, SetVCPFeature,
     PHYSICAL_MONITOR,
 };
-use windows::Win32::Foundation::{BOOL, LPARAM, RECT};
+use windows::Win32::Foundation::{LPARAM, RECT, TRUE};
 use windows::Win32::Graphics::Gdi::{
-    CreateDCW, DeleteDC, EnumDisplayMonitors, GetMonitorInfoW, HDC, HMONITOR, MONITORENUMPROC,
-    MONITORINFOEXW, MONITORINFOF_PRIMARY,
+    CreateDCW, DeleteDC, EnumDisplayMonitors, GetMonitorInfoW, HDC, HMONITOR, MONITORINFOEXW,
 };
 use windows::Win32::UI::ColorSystem::{GetDeviceGammaRamp, SetDeviceGammaRamp};
+use windows::Win32::UI::WindowsAndMessaging::MONITORINFOF_PRIMARY;
 
 use crate::backend::{DisplayBackend, MonitorHandle, GAMMA_RAMP_LEN};
 
@@ -80,7 +80,7 @@ impl DisplayBackend for Win32Backend {
                 None,
                 None,
                 Some(enum_monitor_proc),
-                &mut hmonitors as *mut Vec<HMONITOR> as usize as LPARAM,
+                LPARAM(&mut hmonitors as *mut Vec<HMONITOR> as isize),
             )
         };
         if !result.as_bool() {
@@ -288,7 +288,7 @@ unsafe extern "system" fn enum_monitor_proc(
     if !monitors.is_null() {
         (*monitors).push(hmonitor);
     }
-    BOOL(1)
+    TRUE
 }
 
 /// 查询单个显示器的（设备名、是否主屏、宽、高）

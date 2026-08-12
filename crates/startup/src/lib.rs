@@ -54,7 +54,7 @@ pub mod win32 {
     use windows::core::PCWSTR;
     use windows::Win32::System::Registry::{
         RegCloseKey, RegDeleteValueW, RegOpenKeyExW, RegQueryValueExW, RegSetValueExW, HKEY,
-        HKEY_CURRENT_USER, KEY_QUERY_VALUE, KEY_SET_VALUE, REG_SAM_FLAGS, REG_SZ, REG_VALUE_TYPE,
+        HKEY_CURRENT_USER, KEY_QUERY_VALUE, KEY_SET_VALUE, REG_SAM_FLAGS, REG_SZ,
     };
 
     /// Run 注册表项路径
@@ -127,8 +127,8 @@ pub mod win32 {
                         key,
                         PCWSTR::from_raw(name.as_ptr()),
                         None,
-                        REG_VALUE_TYPE::REG_SZ,
-                        Some(&mut data),
+                        REG_SZ,
+                        Some(data.as_slice()),
                     )
                 };
                 let _ = unsafe { RegCloseKey(key) };

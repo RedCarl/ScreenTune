@@ -6,7 +6,9 @@
 fn main() {
     #[cfg(windows)]
     {
+        // embed-resource 3.x 返回 CompilationResult，不再是 Result
         embed_resource::compile("resources/app.rc", embed_resource::NONE)
+            .manifest_optional()
             .expect("编译 Windows 资源失败");
     }
     #[cfg(not(windows))]

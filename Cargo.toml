@@ -58,6 +58,7 @@ windows = { version = "0.62.2", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",                 # 显示器枚举 / GetMonitorInfoW / CreateDCW
     "Win32_UI_ColorSystem",               # SetDeviceGammaRamp / GetDeviceGammaRamp
+    "Win32_UI_WindowsAndMessaging",       # MONITORINFOF_PRIMARY
     "Win32_Devices_Display",              # DDC/CI：SetVCPFeature / GetPhysicalMonitorsFromHMONITOR
     "Win32_System_Diagnostics_ToolHelp",  # 进程枚举：CreateToolhelp32Snapshot
     "Win32_System_Registry",              # 开机自启：HKCU\...\Run

@@ -57,9 +57,8 @@ impl TrayManager {
             let menu = build_menu(profiles, startup_enabled);
             match &self.tray {
                 Some(tray) => {
-                    // 已存在：仅替换菜单
-                    tray.set_menu(Some(Box::new(menu)))
-                        .map_err(|e| anyhow::anyhow!("更新托盘菜单失败: {e}"))?;
+                    // tray-icon 0.24：set_menu 返回 ()
+                    tray.set_menu(Some(Box::new(menu)));
                 }
                 None => {
                     let icon = build_icon()?;
@@ -90,8 +89,8 @@ impl TrayManager {
         {
             let mut commands = Vec::new();
             while let Ok(event) = tray_icon::menu::MenuEvent::receiver().try_recv() {
-                let id = event.id.0;
-                match id.as_str() {
+                let id = event.id.0.as_str();
+                match id {
                     "open" => commands.push(TrayCommand::ShowWindow),
                     "restore" => commands.push(TrayCommand::RestoreDefault),
                     "startup" => commands.push(TrayCommand::ToggleStartup),
@@ -124,16 +123,18 @@ impl Default for TrayManager {
 /// 构建托盘菜单
 #[cfg(windows)]
 fn build_menu(profiles: &[Profile], startup_enabled: bool) -> tray_icon::menu::Menu {
-    use tray_icon::menu::{Menu, MenuItem, MenuItemBuilder, PredefinedMenuItem};
+    use tray_icon::menu::{
+        CheckMenuItemBuilder, Menu, MenuItem, MenuItemBuilder, PredefinedMenuItem,
+    };
 
     let menu = Menu::new();
 
     let open = MenuItemBuilder::new()
-        .id("open")
+        .id("open".into())
         .text("打开 ScreenTune")
         .build();
     let restore = MenuItemBuilder::new()
-        .id("restore")
+        .id("restore".into())
         .text("恢复默认")
         .build();
     let _ = menu.append_items(&[&open, &restore, &PredefinedMenuItem::separator()]);
@@ -141,7 +142,7 @@ fn build_menu(profiles: &[Profile], startup_enabled: bool) -> tray_icon::menu::M
     // 方案菜单项：id 形如 profile:rust
     for profile in profiles {
         let item = MenuItemBuilder::new()
-            .id(format!("profile:{}", profile.id))
+            .id(format!("profile:{}", profile.id).into())
             .text(format!("应用方案：{}", profile.name))
             .build();
         let _ = menu.append(&item);
@@ -149,17 +150,20 @@ fn build_menu(profiles: &[Profile], startup_enabled: bool) -> tray_icon::menu::M
     let _ = menu.append_items(&[&PredefinedMenuItem::separator()]);
 
     // 开机自启（勾选当前状态）
-    let startup = MenuItemBuilder::new()
-        .id("startup")
+    let startup = CheckMenuItemBuilder::new()
+        .id("startup".into())
         .text("开机自动启动")
         .checked(startup_enabled)
         .build();
     // 检查更新（预留功能，置灰）
-    let check_updates = MenuItem::new("检查更新（敬请期待）", false);
+    let check_updates = MenuItem::new("检查更新（敬请期待）", false, None);
 
     let _ = menu.append_items(&[&startup, &check_updates, &PredefinedMenuItem::separator()]);
 
-    let quit = MenuItemBuilder::new().id("quit").text("退出").build();
+    let quit = MenuItemBuilder::new()
+        .id("quit".into())
+        .text("退出")
+        .build();
     let _ = menu.append(&quit);
     menu
 }
