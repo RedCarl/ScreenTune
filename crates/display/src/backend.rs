@@ -73,6 +73,30 @@ impl MonitorHandle {
     }
 }
 
+/// 显示后端抽象
+pub trait DisplayBackend: Send + Sync {
+    /// 枚举当前全部显示器
+    fn list_monitors(&self) -> Result<Vec<(MonitorHandle, MonitorInfo)>>;
+
+    /// 读取指定显示器的当前 Gamma Ramp（1536 项，R/G/B 各 256）
+    fn get_gamma_ramp(&self, handle: &MonitorHandle) -> Result<[u16; GAMMA_RAMP_LEN]>;
+
+    /// 写入指定显示器的 Gamma Ramp
+    fn set_gamma_ramp(&self, handle: &MonitorHandle, ramp: &[u16; GAMMA_RAMP_LEN]) -> Result<()>;
+
+    /// 通过 DDC/CI 设置硬件亮度（0..100）。返回 `None` 表示该显示器不支持 DDC。
+    fn set_ddc_brightness(&self, handle: &MonitorHandle, value: u32) -> Result<Option<()>>;
+
+    /// 通过 DDC/CI 设置硬件对比度（0..100）
+    fn set_ddc_contrast(&self, handle: &MonitorHandle, value: u32) -> Result<Option<()>>;
+
+    /// 通过 DDC/CI 读取当前亮度（current, max）
+    fn get_ddc_brightness(&self, handle: &MonitorHandle) -> Result<Option<(u32, u32)>>;
+
+    /// 通过 DDC/CI 读取当前对比度（current, max）
+    fn get_ddc_contrast(&self, handle: &MonitorHandle) -> Result<Option<(u32, u32)>>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,28 +124,4 @@ mod tests {
         );
         assert!(h.data_as::<Box<TestData>>().is_some());
     }
-}
-
-/// 显示后端抽象
-pub trait DisplayBackend: Send + Sync {
-    /// 枚举当前全部显示器
-    fn list_monitors(&self) -> Result<Vec<(MonitorHandle, MonitorInfo)>>;
-
-    /// 读取指定显示器的当前 Gamma Ramp（1536 项，R/G/B 各 256）
-    fn get_gamma_ramp(&self, handle: &MonitorHandle) -> Result<[u16; GAMMA_RAMP_LEN]>;
-
-    /// 写入指定显示器的 Gamma Ramp
-    fn set_gamma_ramp(&self, handle: &MonitorHandle, ramp: &[u16; GAMMA_RAMP_LEN]) -> Result<()>;
-
-    /// 通过 DDC/CI 设置硬件亮度（0..100）。返回 `None` 表示该显示器不支持 DDC。
-    fn set_ddc_brightness(&self, handle: &MonitorHandle, value: u32) -> Result<Option<()>>;
-
-    /// 通过 DDC/CI 设置硬件对比度（0..100）
-    fn set_ddc_contrast(&self, handle: &MonitorHandle, value: u32) -> Result<Option<()>>;
-
-    /// 通过 DDC/CI 读取当前亮度（current, max）
-    fn get_ddc_brightness(&self, handle: &MonitorHandle) -> Result<Option<(u32, u32)>>;
-
-    /// 通过 DDC/CI 读取当前对比度（current, max）
-    fn get_ddc_contrast(&self, handle: &MonitorHandle) -> Result<Option<(u32, u32)>>;
 }
