@@ -117,7 +117,9 @@ impl DisplayBackend for Win32Backend {
                         )
                     };
                     supports_ddc = ok != 0;
-                    description = wide_string(&first.szPhysicalMonitorDescription);
+                    // PHYSICAL_MONITOR 为 packed，字段引用可能未对齐，先拷贝再解析
+                    let desc = first.szPhysicalMonitorDescription;
+                    description = wide_string(&desc);
                 }
                 // 释放物理显示器句柄
                 for pm in &phys {

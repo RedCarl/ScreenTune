@@ -109,7 +109,7 @@ pub mod win32 {
                 // 写入当前可执行文件路径（UTF-16 + 结尾 NUL）
                 let exe = std::env::current_exe()
                     .map_err(|e| anyhow::anyhow!("获取可执行文件路径失败: {e}"))?;
-                let mut data: Vec<u8> = exe
+                let data: Vec<u8> = exe
                     .to_string_lossy()
                     .encode_utf16()
                     .chain(std::iter::once(0))
@@ -164,7 +164,7 @@ pub mod win32 {
             RegOpenKeyExW(
                 HKEY_CURRENT_USER,
                 PCWSTR::from_raw(path.as_ptr()),
-                0,
+                Some(0),
                 access,
                 &mut key,
             )
